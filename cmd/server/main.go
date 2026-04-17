@@ -4,6 +4,7 @@ import (
 	"log"
 	"net/http"
 
+	"mini-admin/internal/ai"
 	"mini-admin/internal/config"
 	"mini-admin/internal/database"
 	"mini-admin/internal/handlers"
@@ -36,6 +37,13 @@ func main() {
 
 	userHandler := &handlers.UserHandler{DB: db}
 
+	analyzer := ai.New(cfg.OpenRouterAPIKey, cfg.OpenRouterBase, cfg.AIModel, cfg.AITimeout, cfg.AIMaxUsers)
+	aiHandler := &handlers.AIHandler{
+		DB:       db,
+		Analyzer: analyzer,
+		MaxUsers: cfg.AIMaxUsers,
+	}
+
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("/api/auth/login", authHandler.Login)
@@ -49,6 +57,8 @@ func main() {
 
 	mux.Handle("/api/users", authMw(activeMw(userHandler)))
 	mux.Handle("/api/users/", authMw(activeMw(userHandler)))
+
+	mux.Handle("/api/v1/ai/users/analyze", authMw(activeMw(http.HandlerFunc(aiHandler.Analyze))))
 
 	fs := http.FileServer(http.Dir("frontend"))
 	mux.Handle("/", fs)

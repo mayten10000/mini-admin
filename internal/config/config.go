@@ -2,6 +2,7 @@ package config
 
 import (
 	"os"
+	"strconv"
 	"time"
 )
 
@@ -22,11 +23,23 @@ type Config struct {
 	SeedAdminName     string
 
 	AppPort string
+
+	OpenRouterAPIKey string
+	OpenRouterBase   string
+	AIModel          string
+	AIMaxUsers       int
+	AITimeout        time.Duration
 }
 
 func Load() *Config {
 	accessTTL, _ := time.ParseDuration(getEnv("ACCESS_TOKEN_TTL", "15m"))
 	refreshTTL, _ := time.ParseDuration(getEnv("REFRESH_TOKEN_TTL", "168h"))
+	aiTimeout, _ := time.ParseDuration(getEnv("AI_TIMEOUT", "60s"))
+
+	maxUsers, _ := strconv.Atoi(getEnv("AI_MAX_USERS", "100"))
+	if maxUsers <= 0 {
+		maxUsers = 100
+	}
 
 	return &Config{
 		DBHost:     getEnv("DB_HOST", "localhost"),
@@ -45,6 +58,12 @@ func Load() *Config {
 		SeedAdminName:     getEnv("SEED_ADMIN_NAME", "Administrator"),
 
 		AppPort: getEnv("APP_PORT", "8080"),
+
+		OpenRouterAPIKey: getEnv("OPENROUTER_API_KEY", ""),
+		OpenRouterBase:   getEnv("OPENROUTER_BASE", "https://openrouter.ai/api/v1"),
+		AIModel:          getEnv("AI_MODEL", "google/gemini-2.0-flash-001"),
+		AIMaxUsers:       maxUsers,
+		AITimeout:        aiTimeout,
 	}
 }
 

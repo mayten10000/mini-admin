@@ -333,6 +333,12 @@ td.actions .btn + .btn { margin-left: 4px; }
 }
 .badge-active { background: var(--success-bg); color: var(--success); }
 .badge-disabled { background: var(--warning-bg); color: var(--warning); }
+.badge-low { background: var(--success-bg); color: var(--success); }
+.badge-medium { background: var(--warning-bg); color: var(--warning); }
+.badge-high { background: #ffe3e3; color: var(--danger); }
+
+.toolbar-actions { display: flex; gap: 8px; }
+.ai-meta { color: var(--text-muted); font-size: 12px; padding: 8px 0; }
 
 .pagination {
   display: flex;

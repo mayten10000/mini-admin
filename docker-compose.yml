@@ -34,6 +34,11 @@ services:
       SEED_ADMIN_EMAIL: ${SEED_ADMIN_EMAIL:-admin@example.com}
       SEED_ADMIN_PASSWORD: ${SEED_ADMIN_PASSWORD:-admin123}
       SEED_ADMIN_NAME: ${SEED_ADMIN_NAME:-Administrator}
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
+      OPENROUTER_BASE: ${OPENROUTER_BASE:-https://openrouter.ai/api/v1}
+      AI_MODEL: ${AI_MODEL:-google/gemini-2.0-flash-001}
+      AI_MAX_USERS: ${AI_MAX_USERS:-100}
+      AI_TIMEOUT: ${AI_TIMEOUT:-60s}
     depends_on:
       postgres:
         condition: service_healthy

@@ -79,7 +79,86 @@ document.addEventListener('DOMContentLoaded', () => {
       case 'view':   renderView(content, data); break;
       case 'create': renderForm(content, null); break;
       case 'edit':   renderForm(content, data); break;
+      case 'analyze': renderAnalyze(content); break;
     }
+  }
+
+  async function renderAnalyze(container) {
+    container.innerHTML = `
+      <div class="toolbar">
+        <div class="toolbar-filters">
+          <a class="back-link" id="ai-back">← Back to list</a>
+        </div>
+        <div class="toolbar-actions">
+          <button class="btn btn-primary" id="ai-run">Проанализировать пользователей</button>
+        </div>
+      </div>
+      <div class="ai-meta" id="ai-meta"></div>
+      <div class="card">
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Имя</th>
+                <th>Email</th>
+                <th>Статус</th>
+                <th>Создан</th>
+                <th>Обновлён</th>
+                <th>Уровень риска</th>
+                <th>Комментарий ИИ</th>
+                <th>Рекомендуемое действие</th>
+              </tr>
+            </thead>
+            <tbody id="ai-tbody">
+              <tr><td colspan="9" style="text-align:center;padding:40px;color:var(--text-muted)">Нажмите «Проанализировать пользователей», чтобы запустить ИИ.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    `;
+
+    document.getElementById('ai-back').onclick = (e) => { e.preventDefault(); navigateTo('list'); };
+
+    const runBtn = document.getElementById('ai-run');
+    const tbody = document.getElementById('ai-tbody');
+    const meta = document.getElementById('ai-meta');
+
+    runBtn.onclick = async () => {
+      runBtn.disabled = true;
+      const oldLabel = runBtn.textContent;
+      runBtn.textContent = 'Анализирую…';
+      meta.textContent = '';
+      tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;padding:40px;color:var(--text-muted)">Идёт анализ, подождите…</td></tr>`;
+
+      try {
+        const data = await API.post('/api/v1/ai/users/analyze', {});
+        const results = data.results || [];
+        if (results.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;padding:40px;color:var(--text-muted)">Нет данных для анализа</td></tr>`;
+        } else {
+          tbody.innerHTML = results.map(u => `
+            <tr>
+              <td>${u.id}</td>
+              <td>${esc(u.name)}</td>
+              <td>${esc(u.email)}</td>
+              <td><span class="badge badge-${u.status}">${u.status}</span></td>
+              <td>${formatDate(u.created_at)}</td>
+              <td>${formatDate(u.updated_at)}</td>
+              <td><span class="badge badge-${esc(u.risk_level)}">${esc(u.risk_level)}</span></td>
+              <td>${esc(u.comment)}</td>
+              <td>${esc(u.recommended_action)}</td>
+            </tr>
+          `).join('');
+        }
+        meta.textContent = `Проанализировано: ${data.total} • модель: ${data.model || '—'}`;
+      } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;padding:40px;color:var(--danger)">${esc(err.message)}</td></tr>`;
+      } finally {
+        runBtn.disabled = false;
+        runBtn.textContent = oldLabel;
+      }
+    };
   }
 
   async function renderList(container) {
@@ -93,7 +172,10 @@ document.addEventListener('DOMContentLoaded', () => {
             <option value="disabled" ${listParams.status === 'disabled' ? 'selected' : ''}>Disabled</option>
           </select>
         </div>
-        <button class="btn btn-primary" id="btn-create-user">+ New User</button>
+        <div class="toolbar-actions">
+          <button class="btn btn-outline" id="btn-ai-analyze">AI: Проанализировать пользователей</button>
+          <button class="btn btn-primary" id="btn-create-user">+ New User</button>
+        </div>
       </div>
       <div class="card">
         <div class="table-wrapper">
@@ -118,6 +200,7 @@ document.addEventListener('DOMContentLoaded', () => {
     `;
 
     document.getElementById('btn-create-user').onclick = () => navigateTo('create');
+    document.getElementById('btn-ai-analyze').onclick = () => navigateTo('analyze');
 
     document.getElementById('filter-search').addEventListener('input', (e) => {
       listParams.search = e.target.value;

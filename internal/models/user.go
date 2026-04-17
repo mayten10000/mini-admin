@@ -154,6 +154,30 @@ func UpdateUserPassword(db *sql.DB, id int64, hash string) error {
 	return err
 }
 
+func ListUsersForAI(db *sql.DB, limit int) ([]User, error) {
+	if limit <= 0 {
+		limit = 100
+	}
+	rows, err := db.Query(
+		"SELECT id, name, email, status, created_at, updated_at FROM users ORDER BY id ASC LIMIT $1",
+		limit,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	users := []User{}
+	for rows.Next() {
+		var u User
+		if err := rows.Scan(&u.ID, &u.Name, &u.Email, &u.Status, &u.CreatedAt, &u.UpdatedAt); err != nil {
+			return nil, err
+		}
+		users = append(users, u)
+	}
+	return users, nil
+}
+
 func DeleteUser(db *sql.DB, id int64) error {
 	res, err := db.Exec("DELETE FROM users WHERE id=$1", id)
 	if err != nil {
